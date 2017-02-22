@@ -1,0 +1,254 @@
+---
+title: "Week 2 Milestones"
+author: "John Elliott"
+date: "February 14, 2017"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(stringr)
+library(tm)
+library(ngram)
+library(wordcloud)
+
+```
+
+## Intro
+
+This document is created as a milestone report for week two of the capstone class for the Johns Hopkins Data Science class on Coursera. The data set was provided [Dataset](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) that contained text files in multiple languages, for this study the english versions were chosen. the goal for this report is to download and perform basic exploritory anaylisis of the data sets. Code writen for this was dirived from these sources: "Handeling and Processing Strings in R", Gaston Sanchez; "R Programming for Data Scientist", Roger Peng; "Guide to the ngram Package", Schmit and Heckendorf. The 
+
+##  Importing Data Files
+
+The data sets are first examined for file integrity during the loading process into the R envioroment using  the readlines command. The Blog data set loaded without any issues but the other two both generated warnings and errors when loaded. The en_US.news.txt had the error **incomplete final line found on 'en_US.news.txt'> close(con2)** This error stopped the file from loading completly, to read in the data the method type was changed in the file command to read binary "rb". The Twiiter data set generated warnings that it had embedded nuls in lines 167155,268547, 1274086  and 1759032. To ignore the embeddded nuls the readlines setting for skipNul was set to TRUE.
+
+
+```{r Load_Data, echo=FALSE}
+
+# Data file locations
+fileOne         <- "en_US.blogs.txt"
+fileTwo         <- "en_US.news.txt"
+fileThree       <- "en_US.twitter.txt"
+
+#read data 
+con1 <- file(fileOne,"r")
+data1 <- readLines(con1)
+close(con1)
+
+con2 <- file(fileTwo,"rb")
+data2 <- readLines(con2)
+close(con2)
+
+con3 <- file(fileThree,"r")
+data3 <- readLines(con3, skipNul = TRUE)
+close(con3)
+
+
+rm(con1,con2,con3,fileOne,fileTwo,fileThree)
+
+```
+
+```{r preProcessing, echo=FALSE}
+# change case to lower
+data1 <- tolower(data1)
+data2 <- tolower(data2)
+data3 <- tolower(data3)
+
+
+
+```
+
+
+
+```{r getBasicInfo, echo=FALSE}
+##################################################
+
+# How many charecters are in each line
+charecter_per_line_1 <- as.integer(lapply(data1, nchar))
+charecter_per_line_2 <- as.integer(lapply(data2, nchar))
+charecter_per_line_3 <- as.integer(lapply(data3, nchar))
+
+#statistics
+summary(charecter_per_line_1)
+summary(charecter_per_line_2)
+summary(charecter_per_line_3)
+
+#total charecters
+total_chars_1 <- sum(charecter_per_line_1)
+total_chars_2 <- sum(charecter_per_line_2)
+total_chars_3 <- sum(charecter_per_line_3)
+myChars <- c( total_chars_1,total_chars_2,total_chars_3 )
+
+##################################################
+
+## How many words are in each line ##
+#split string into pieces
+data_list_1 <- str_split(data1, pattern = " ")
+data_list_2 <- str_split(data2, pattern = " ")
+data_list_3 <- str_split(data3, pattern = " ")
+
+#count words
+words_per_list_1 =sapply(data_list_1, length)
+words_per_list_2 =sapply(data_list_2, length)
+words_per_list_3 =sapply(data_list_3, length)
+
+#statistics
+summary_1 <- summary(words_per_list_1)
+summary_2 <- summary(words_per_list_2)
+summary_3 <- summary(words_per_list_3)
+
+Min <- c(summary_1[1],summary_2[1],summary_3[1])
+Median <- c(summary_1[3],summary_2[3],summary_3[3])
+Mean <- c(summary_1[4],summary_2[4],summary_3[4])
+Max <- c(summary_1[6],summary_2[6],summary_3[6])
+
+#total number of words
+total_words_1 <- sum(words_per_list_1)
+total_words_2 <- sum(words_per_list_2)
+total_words_3 <- sum(words_per_list_3)
+
+#total number of lines
+total_lines_1 <- length(words_per_list_1)
+total_lines_2 <- length(words_per_list_2)
+total_lines_3 <- length(words_per_list_3)
+mylines <- c(total_lines_1,total_lines_2,total_lines_3)
+myWords <- c(total_words_1,total_words_2,total_words_3)
+##################################################
+## How much white space ##
+# strip white space
+
+# US Blogs 
+data1_test1             <- stripWhitespace(data1)               #strip white space
+num_char_no_WS_1        <- sum(as.integer(lapply(data1_test1, nchar)))
+diff_WS_1 <- total_chars_1 - num_char_no_WS_1
+
+# US News 
+data2_test1             <- stripWhitespace(data2)               #strip white space
+num_char_no_WS_2        <- sum(as.integer(lapply(data2_test1, nchar)))
+diff_WS_2 <- total_chars_2 - num_char_no_WS_2
+
+# US Twitter 
+data3_test1             <- stripWhitespace(data3)               #strip white space
+num_char_no_WS_3  <- sum(as.integer(lapply(data3_test1, nchar)))
+diff_WS_3 <- total_chars_3 - num_char_no_WS_3
+
+whiteSpace <- c(diff_WS_1,diff_WS_2,diff_WS_3)
+##################################################
+
+myNames <- c("Blog","News", "Twitter")
+
+myDF1 <- data.frame( Lines = mylines, Characters = myChars,  Words = myWords, White_Space = whiteSpace, row.names = myNames)
+
+myDF2 <- data.frame( Median, Mean, Max, row.names = myNames)
+
+rm(num_char_no_WS_1,num_char_no_WS_2,num_char_no_WS_3)
+rm(diff_WS_1,diff_WS_2,diff_WS_3,data1_test1,data2_test1,data3_test1)
+
+```
+
+
+```{r ngramPackage, echo=FALSE}
+
+
+
+test_data1 <- concatenate ( lapply ( data1 , "[" , 1) )
+test_data2 <- concatenate ( lapply ( data2 , "[" , 1) )
+test_data3 <- concatenate ( lapply ( data2 , "[" , 1) )
+
+test_data1 <- preprocess (test_data1 , case ="lower" , remove.punct = TRUE )
+test_data2 <- preprocess (test_data2 , case ="lower" , remove.punct = TRUE )
+test_data3 <- preprocess (test_data3 , case ="lower" , remove.punct = TRUE )
+
+
+##################################################
+# remove non-characters
+
+for(i in 1:length(words_per_list_1)){
+        
+       for(t in 1:words_per_list_1[i]){
+                data_list_1[[i]][[t]] <- gsub("[^a-z]"," ",data_list_1[[i]][[t]] )
+                }
+        }
+
+##################################################
+```
+
+
+
+```{r getAdvancedInfo, echo=FALSE}
+
+words_1 <- unlist(data_list_1)
+words_2 <- unlist(data_list_2)
+words_3 <- unlist(data_list_3)
+
+rm(data_list_1,data_list_2,data_list_3)
+
+
+unique_words_1 <- unique(words_1)
+unique_words_2 <- unique(words_2)
+unique_words_3 <- unique(words_3)
+
+
+num_unique_words_1 <- length(unique(unique_words_1))
+num_unique_words_2 <- length(unique(unique_words_2))
+num_unique_words_3 <- length(unique(unique_words_3))
+
+
+count_words_1 =table(words_1)
+count_words_2 =table(words_2)
+count_words_3 =table(words_3)
+
+top_30_order =order(count_words_1, decreasing = TRUE)[1:30]
+top_30_freqs_1 =sort(count_words_1, decreasing = TRUE)[1:30]
+top_30_words = unique_words_1[top_30_order]
+
+myTags <- str_match_all(data3,"#[a-zA-Z]{1,}")
+
+myTags <- unlist(myTags)
+unique_tags <- unique(myTags)
+count_tags <- table(myTags)
+
+top_order <- order(count_tags, decreasing = TRUE)[1:30]
+top_freq <- sort(count_tags, decreasing = TRUE)[1:30]
+top_tags <- unique_tags[top_order]
+
+
+#str_locate_all
+
+##################################################
+```
+## Exploritory Data Anaylisis
+
+Now that the data is loaded into the R enviorment it is analyzed to get a feel for its content.
+The character and word count per line is is gathered and some simple trends are are generated.
+A table summerizing some basic information shows word counts and number of lines and total number of characters is shown below.
+```{r basicTable, echo=FALSE}
+print(myDF1)
+
+```
+
+The basic statistics of the word count per line in the data sets show the mean median and maximum here the Twitter data set stands out were twitter feeds are limited on the length by nature.
+```{r statTable, echo=FALSE}
+
+print(myDF2)
+```
+
+
+# Plots
+## Histogram of frequency counts of words in the Blog data set
+
+```{r makeHistoGram}
+ barplot(top_30_freqs_1, border = NA, names.arg = top_30_words,las = 2, main = "Blog Data")
+
+```
+
+## Word Cloud of Twitter hash-tags
+```{r wordCloud, warning=FALSE}
+wordcloud(top_tags, top_freq, scale=c(4,.5), min.freq=100, max.words=30, random.order=FALSE, rot.per=.5)
+```
+
+
+
+
