@@ -3,8 +3,8 @@ title: "Week 2 Milestones"
 author: "John Elliott"
 date: "February 14, 2017"
 output:
-  word_document: default
   html_document: default
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -18,11 +18,11 @@ library(wordcloud)
 
 ## Intro
 
-This document is created as a milestone report for week two of the capstone class for the Johns Hopkins Data Science class on Coursera. The data set was provided [Dataset](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) that contained text files in multiple languages, for this study the english versions were chosen. the goal for this report is to download and perform basic exploritory anaylisis of the data sets. Code writen for this was dirived from these sources: "Handeling and Processing Strings in R", Gaston Sanchez; "R Programming for Data Scientist", Roger Peng; "Guide to the ngram Package", Schmit and Heckendorf. The 
+This document is created as a milestone report for week two of the capstone class for the Johns Hopkins Data Science class on Coursera. The data set was provided [Dataset](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) that contained text files in multiple languages, for this study the English versions were chosen. the goal for this report is to download and perform basic exploratory analysis of the data sets. Code written for this was derived from these sources: "Handling and Processing Strings in R", Gaston Sanchez; "R Programming for Data Scientist", Roger Peng; "Guide to the ngram Package", Schmit and Heckendorf. The complete code can be found at [CODE](https://github.com/DrJohnElliott/Capstone/blob/master/Week_2_milestone_report.Rmd)
 
 ##  Importing Data Files
 
-The data sets are first examined for file integrity during the loading process into the R envioroment using  the readlines command. The Blog data set loaded without any issues but the other two both generated warnings and errors when loaded. The en_US.news.txt had the error **incomplete final line found on 'en_US.news.txt'> close(con2)** This error stopped the file from loading completly, to read in the data the method type was changed in the file command to read binary "rb". The Twiiter data set generated warnings that it had embedded nuls in lines 167155,268547, 1274086  and 1759032. To ignore the embeddded nuls the readlines setting for skipNul was set to TRUE.
+The data sets are first examined for file integrity during the loading process into the R environment using  the readlines command. The Blog data set loaded without any issues but the other two both generated warnings and errors when loaded. The en_US.news.txt had the error, "incomplete final line found on 'en_US.news.txt'> close(con2)". This error stopped the file from loading completely, to read in the data the method type was changed in the file command to read binary "rb". The next problem was found in the Twitter data set, when loaded it generated warnings that it had embedded nuls in lines 167155,268547, 1274086  and 1759032. To ignore the embedded nuls the readlines setting for skipNul was set to TRUE.
 
 
 ```{r Load_Data, echo=FALSE}
@@ -50,16 +50,14 @@ rm(con1,con2,con3,fileOne,fileTwo,fileThree)
 
 ```
 
+
 ```{r preProcessing, echo=FALSE}
 # change case to lower
 data1 <- tolower(data1)
 data2 <- tolower(data2)
 data3 <- tolower(data3)
 
-
-
 ```
-
 
 
 ```{r getBasicInfo, echo=FALSE}
@@ -71,9 +69,9 @@ charecter_per_line_2 <- as.integer(lapply(data2, nchar))
 charecter_per_line_3 <- as.integer(lapply(data3, nchar))
 
 #statistics
-summary(charecter_per_line_1)
-summary(charecter_per_line_2)
-summary(charecter_per_line_3)
+char_sum_1 <- summary(charecter_per_line_1)
+char_sum_2 <- summary(charecter_per_line_2)
+char_sum_3 <- summary(charecter_per_line_3)
 
 #total charecters
 total_chars_1 <- sum(charecter_per_line_1)
@@ -149,20 +147,8 @@ rm(diff_WS_1,diff_WS_2,diff_WS_3,data1_test1,data2_test1,data3_test1)
 ```
 
 
-```{r ngramPackage, echo=FALSE}
+```{r clearNonChar, echo=FALSE}
 
-
-
-test_data1 <- concatenate ( lapply ( data1 , "[" , 1) )
-test_data2 <- concatenate ( lapply ( data2 , "[" , 1) )
-test_data3 <- concatenate ( lapply ( data2 , "[" , 1) )
-
-test_data1 <- preprocess (test_data1 , case ="lower" , remove.punct = TRUE )
-test_data2 <- preprocess (test_data2 , case ="lower" , remove.punct = TRUE )
-test_data3 <- preprocess (test_data3 , case ="lower" , remove.punct = TRUE )
-
-
-##################################################
 # remove non-characters
 
 for(i in 1:length(words_per_list_1)){
@@ -172,7 +158,6 @@ for(i in 1:length(words_per_list_1)){
                 }
         }
 
-##################################################
 ```
 
 
@@ -219,11 +204,48 @@ top_tags <- unique_tags[top_order]
 
 ##################################################
 ```
+
+```{r nGram, echo=FALSE}
+set.seed(1973)
+
+theta <- 0.3 
+N1 <- length(data1)
+myRows_1 <- rbinom(n = N1, size = 1, prob = theta) 
+ data1_sample_1 <- data1[myRows_1]       
+ 
+N2 <- length(data2)
+myRows_2 <- rbinom(n = N2, size = 1, prob = theta) 
+ data1_sample_2 <- data2[myRows_2] 
+ 
+ N3 <- length(data3)
+myRows_3 <- rbinom(n = N3, size = 1, prob = theta) 
+ data1_sample_3 <- data3[myRows_3] 
+ 
+ 
+data1_con <- concatenate ( lapply ( data1_sample_1 , "[" , 1) )
+data2_con <- concatenate ( lapply ( data1_sample_2 , "[" , 1) )
+data3_con <- concatenate ( lapply ( data1_sample_3 , "[" , 1) )
+
+data1_con <- preprocess(data1_con , case ="upper" , remove.punct = TRUE )
+data2_con <- preprocess(data2_con , case ="upper" , remove.punct = TRUE )
+data3_con <- preprocess(data3_con , case ="upper" , remove.punct = TRUE )
+
+ngram1_n2 <- ngram(data1_con, n=2)
+ngram2_n2 <- ngram(data2_con, n=2)
+ngram3_n2 <- ngram(data3_con, n=2)
+
+ngram1_n3 <- ngram(data1_con, n=3)
+ngram2_n3 <- ngram(data2_con, n=3)
+ngram3_n3 <- ngram(data3_con, n=3)
+
+
+```
+
 ## Exploritory Data Anaylisis
 
-Now that the data is loaded into the R enviorment it is analyzed to get a feel for its content.
+Now that the data is loaded into the R environment it is analyzed to get a feel for its content.
 The character and word count per line is is gathered and some simple trends are are generated.
-A table summerizing some basic information shows word counts and number of lines and total number of characters is shown below.
+A table summarizing some basic information shows word counts and number of lines and total number of characters is shown below.
 ```{r basicTable, echo=FALSE}
 print(myDF1)
 
@@ -235,19 +257,46 @@ The basic statistics of the word count per line in the data sets show the mean m
 print(myDF2)
 ```
 
+#nGrams
+Exploratory nGrams both 2 and 3 word were generated from a sampled data 
+## 2 word nGrams
+```{r showNgram2, echo=FALSE}
+print("Blog Data")
+        head(get.phrasetable ( ngram1_n2 ))
+print( "News Data")
+        head(get.phrasetable ( ngram2_n2 ))
+print( "Twitter Data")
+        head(get.phrasetable ( ngram3_n2 ))
 
+```
+
+
+```{r showNgram3, echo=FALSE}
+print("Blog Data")
+        head(get.phrasetable ( ngram1_n3 ))
+print( "News Data")
+        head(get.phrasetable ( ngram2_n3 ))
+print( "Twitter Data")
+        head(get.phrasetable ( ngram3_n3 ))
+
+```
 # Plots
-## Histogram of frequency counts of words in the Blog data set
 
+Histograms were made of the word distribution to explore the data sets. An example for the Blog data is shown below
+
+## Histogram of frequency counts of words in the Blog data set
 ```{r makeHistoGram}
  barplot(top_30_freqs_1, border = NA, names.arg = top_30_words,las = 2, main = "Blog Data")
 
 ```
 
+To demonstrate another visual aid used to explore data a word cloud of the hash-tags found in the twitter data set is generated
+
 ## Word Cloud of Twitter hash-tags
 ```{r wordCloud, warning=FALSE}
 wordcloud(top_tags, top_freq, scale=c(4,.5), min.freq=100, max.words=30, random.order=FALSE, rot.per=.5)
 ```
+
 
 
 
