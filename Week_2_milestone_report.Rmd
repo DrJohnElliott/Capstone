@@ -269,7 +269,7 @@ print( "Twitter Data")
         head(get.phrasetable ( ngram3_n2 ))
 
 ```
-
+# 3 word nGrams
 
 ```{r showNgram3, echo=FALSE}
 print("Blog Data")
